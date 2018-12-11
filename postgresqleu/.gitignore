@@ -1,4 +1,0 @@
-*.pyc
-local_settings.py
-trustly_public.pem
-trustly_private.pem

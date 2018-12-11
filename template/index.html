@@ -26,7 +26,7 @@
       <div class="carousel-inner">
 {%for event in events%}
 	<div class="carousel-item{%if forloop.first%} active{%endif%}">
-	  <img class="d-block w-100" src="{{event.promopicurl|default:"/media/img/default_event.jpg"}}" alt="{{event}}">
+	  <img class="d-block w-100" src="{{event.promopicurl|default:"/media/local/img/default_event.jpg"}}" alt="{{event}}">
 	  <div class="carousel-caption eventCarouselCaption">
 	    <div class="info">
 	      <h3>{{event.conferencename}}</h3>
