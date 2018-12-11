@@ -1,3 +1,4 @@
+local_settings.py
 *.pyc
 trustly_private.pem
 trustly_public.pem
