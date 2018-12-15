@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class CMutuelTransaction(models.Model):
     opdate = models.DateField(null=False, blank=False)
     valdate = models.DateField(null=False, blank=False)
@@ -10,8 +11,8 @@ class CMutuelTransaction(models.Model):
     sent = models.BooleanField(null=False, blank=False, default=False)
 
     class Meta:
-        verbose_name='CMutuel Transaction'
-        verbose_name_plural='CMutuel Transactions'
+        verbose_name = 'CMutuel Transaction'
+        verbose_name_plural = 'CMutuel Transactions'
         ordering = ('-opdate',)
 
     def __unicode__(self):

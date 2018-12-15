@@ -22,6 +22,7 @@ from postgresqleu.mailqueue.util import send_simple_mail
 
 from pgeusite.cmutuel.models import CMutuelTransaction
 
+
 class FormHtmlParser(HTMLParser):
     def __init__(self):
         HTMLParser.__init__(self)
@@ -30,12 +31,13 @@ class FormHtmlParser(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         if tag == 'form':
-            for k,v in attrs:
+            for k, v in attrs:
                 if k == 'action':
                     if v.find('telechargement.cgi?'):
                         self.in_form = True
                         self.target_url = v
                         return
+
 
 class CurlWrapper(object):
     def __init__(self):
@@ -65,15 +67,16 @@ class CurlWrapper(object):
 
     def expect_redirect(self, fetchpage, redirectto, postdata=None):
         if postdata:
-            (c,s) = self.post(fetchpage, postdata)
+            (c, s) = self.post(fetchpage, postdata)
         else:
-            (c,s) = self.get(fetchpage)
+            (c, s) = self.get(fetchpage)
         if c.getinfo(pycurl.RESPONSE_CODE) != 302:
             raise CommandError("Supposed to receive 302 for %s, got %s" % (fetchpage, c.getinfo(c.RESPONSE_CODE)))
         if not isinstance(redirectto, list):
             redirrectto = [redirectto, ]
         if not c.getinfo(pycurl.REDIRECT_URL) in redirectto:
-            raise CommandError("Received unexpected redirect from %s to '%s' (expected %s)" % (fetchpage, c.getinfo(pycurl.REDIRECT_URL), redirectto))
+            raise CommandError("Received unexpected redirect from %s to '%s' (expected %s)" % (
+                fetchpage, c.getinfo(pycurl.REDIRECT_URL), redirectto))
         return c.getinfo(pycurl.REDIRECT_URL)
 
 
@@ -91,7 +94,9 @@ class Command(BaseCommand):
 
         curl = CurlWrapper()
 
-        if verbose: self.stdout.write("Logging in...")
+        if verbose:
+            self.stdout.write("Logging in...")
+
         curl.expect_redirect('https://www.creditmutuel.fr/en/authentification.html',
                              'https://www.creditmutuel.fr/en/banque/pageaccueil.html', {
                                  '_cm_user': settings.CM_USER_ACCOUNT,
@@ -104,19 +109,23 @@ class Command(BaseCommand):
                              'https://www.creditmutuel.fr/en/banque/paci_engine/engine.aspx')
         got_redir = curl.expect_redirect('https://www.creditmutuel.fr/en/banque/paci_engine/engine.aspx',
                                          ['https://www.creditmutuel.fr/en/banque/homepage_dispatcher.cgi',
-                                         'https://www.creditmutuel.fr/en/banque/paci_engine/static_content_manager.aspx'])
+                                          'https://www.creditmutuel.fr/en/banque/paci_engine/static_content_manager.aspx'])
         if got_redir == 'https://www.creditmutuel.fr/en/banque/paci_engine/static_content_manager.aspx':
             # Got the "please fill out your personal data" form. So let's bypass it
             curl.expect_redirect('https://www.creditmutuel.fr/en/banque/paci_engine/static_content_manager.aspx?_productfilter=PACI&_pid=ContentManager&_fid=DoStopPaciAndRemind',
                                  'https://www.creditmutuel.fr/en/banque/homepage_dispatcher.cgi')
 
         # Download the form
-        if verbose: self.stdout.write("Downloading form...")
-        (c,s) = curl.get('https://www.creditmutuel.fr/cmidf/en/banque/compte/telechargement.cgi')
+        if verbose:
+            self.stdout.write("Downloading form...")
+
+        (c, s) = curl.get('https://www.creditmutuel.fr/cmidf/en/banque/compte/telechargement.cgi')
         if c.getinfo(pycurl.RESPONSE_CODE) != 200:
             raise CommandError("Supposed to receive 200, got %s" % c.getinfo(c.RESPONSE_CODE))
 
-        if verbose: self.stdout.write("Parsing form...")
+        if verbose:
+            self.stdout.write("Parsing form...")
+
         parser = FormHtmlParser()
         parser.feed(s.getvalue())
 
@@ -127,38 +136,40 @@ class Command(BaseCommand):
             fromdate = fromdate['max']-datetime.timedelta(days=7)
         else:
             # No previous one, so just pick a date... This will only happen once..
-            fromdate = datetime.date(2014,1,1)
+            fromdate = datetime.date(2014, 1, 1)
 
-        if verbose: self.stdout.write("Fetch report since {0}".format(fromdate))
-        (c,s) = curl.post("https://www.creditmutuel.fr%s" % parser.target_url, {
-            'data_formats_selected':'csv',
-            'data_formats_options_cmi_download':'0',
-            'data_formats_options_ofx_format':'7',
-            'Bool:data_formats_options_ofx_zonetiers':'false',
-            'CB:data_formats_options_ofx_zonetiers':'on',
-            'data_formats_options_qif_fileformat':'6',
-            'ata_formats_options_qif_dateformat':'0',
-            'data_formats_options_qif_amountformat':'0',
-            'data_formats_options_qif_headerformat':'0',
-            'Bool:data_formats_options_qif_zonetiers':'false',
-            'CB:data_formats_options_qif_zonetiers':'on',
-            'data_formats_options_csv_fileformat':'2',
-            'data_formats_options_csv_dateformat':'0',
-            'data_formats_options_csv_fieldseparator':'0',
-            'data_formats_options_csv_amountcolnumber':'0',
-            'data_formats_options_csv_decimalseparator':'1',
-            'Bool:data_accounts_account_ischecked':'false',
-            'CB:data_accounts_account_ischecked':'on',
-            'data_daterange_value':'range',
-            '[t:dbt%3adate;]data_daterange_startdate_value':fromdate.strftime('%d/%m/%Y'),
-            '[t:dbt%3adate;]data_daterange_enddate_value':'',
-            '_FID_DoDownload.x':'57',
-            '_FID_DoDownload.y':'17',
-            'data_accounts_selection':'1',
-            'data_formats_options_cmi_show':'True',
-            'data_formats_options_qif_show':'True',
-            'data_formats_options_excel_show':'True',
-            'data_formats_options_csv_show':'True',
+        if verbose:
+            self.stdout.write("Fetch report since {0}".format(fromdate))
+
+        (c, s) = curl.post("https://www.creditmutuel.fr%s" % parser.target_url, {
+            'data_formats_selected': 'csv',
+            'data_formats_options_cmi_download': '0',
+            'data_formats_options_ofx_format': '7',
+            'Bool:data_formats_options_ofx_zonetiers': 'false',
+            'CB:data_formats_options_ofx_zonetiers': 'on',
+            'data_formats_options_qif_fileformat': '6',
+            'ata_formats_options_qif_dateformat': '0',
+            'data_formats_options_qif_amountformat': '0',
+            'data_formats_options_qif_headerformat': '0',
+            'Bool:data_formats_options_qif_zonetiers': 'false',
+            'CB:data_formats_options_qif_zonetiers': 'on',
+            'data_formats_options_csv_fileformat': '2',
+            'data_formats_options_csv_dateformat': '0',
+            'data_formats_options_csv_fieldseparator': '0',
+            'data_formats_options_csv_amountcolnumber': '0',
+            'data_formats_options_csv_decimalseparator': '1',
+            'Bool:data_accounts_account_ischecked': 'false',
+            'CB:data_accounts_account_ischecked': 'on',
+            'data_daterange_value': 'range',
+            '[t:dbt%3adate;]data_daterange_startdate_value': fromdate.strftime('%d/%m/%Y'),
+            '[t:dbt%3adate;]data_daterange_enddate_value': '',
+            '_FID_DoDownload.x': '57',
+            '_FID_DoDownload.y': '17',
+            'data_accounts_selection': '1',
+            'data_formats_options_cmi_show': 'True',
+            'data_formats_options_qif_show': 'True',
+            'data_formats_options_excel_show': 'True',
+            'data_formats_options_csv_show': 'True',
         })
         if c.getinfo(pycurl.RESPONSE_CODE) != 200:
             raise CommandError("Supposed to receive 200, got %s" % c.getinfo(c.RESPONSE_CODE))
