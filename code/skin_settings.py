@@ -26,6 +26,10 @@ EU_VAT = True
 EU_VAT_HOME_COUNTRY = "FR"
 EU_VAT_VALIDATE = True
 
+# Invoice
+INVOICE_PDF_BUILDER = 'pgeuinvoices.PGEUInvoice'
+REFUND_PDF_BUILDER = 'pgeuinvoices.PGEURefund'
+
 # Paypal
 PAYPAL_EMAIL = "paypal@postgresql.eu"
 PAYPAL_RECEIVER = "paypal@postgresql.eu"
