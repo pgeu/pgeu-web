@@ -133,7 +133,7 @@ class Command(BaseCommand):
         if fromdate['max']:
             # Overlap with 1 week, just in case there are some old xacts. Yes, we might loose some,
             # but we don't really care :)
-            fromdate = fromdate['max']-datetime.timedelta(days=7)
+            fromdate = fromdate['max'] - datetime.timedelta(days=7)
         else:
             # No previous one, so just pick a date... This will only happen once..
             fromdate = datetime.date(2014, 1, 1)
