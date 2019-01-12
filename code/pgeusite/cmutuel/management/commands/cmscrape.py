@@ -8,7 +8,7 @@ from django.db import transaction
 from django.db.models import Max, Q
 from django.conf import settings
 
-import pycurl
+import requests
 import io
 import urllib.request, urllib.parse, urllib.error
 import datetime
@@ -39,45 +39,30 @@ class FormHtmlParser(HTMLParser):
                         return
 
 
-class CurlWrapper(object):
+class SessionWrapper(object):
     def __init__(self):
-        self.curl = pycurl.Curl()
-        self.curl.setopt(pycurl.COOKIEFILE, '')
-
-    def request(self, url, post, postdict=None):
-        self.curl.setopt(pycurl.URL, str(url))
-        readstr = io.StringIO()
-        self.curl.setopt(pycurl.WRITEFUNCTION, readstr.write)
-        self.curl.setopt(pycurl.FOLLOWLOCATION, 0)
-        if post:
-            self.curl.setopt(pycurl.POST, 1)
-            curlstr = urllib.parse.urlencode(postdict)
-            self.curl.setopt(pycurl.POSTFIELDS, curlstr)
-            self.curl.setopt(pycurl.POSTFIELDSIZE, len(curlstr))
-        else:
-            self.curl.setopt(pycurl.POST, 0)
-        self.curl.perform()
-        return (self.curl, readstr)
+        self.session = requests.Session()
 
     def get(self, url):
-        return self.request(url, False)
+        return self.session.get(url, allow_redirects=False)
 
     def post(self, url, postdict):
-        return self.request(url, True, postdict)
+        return self.session.post(url, data=postdict, allow_redirects=False)
 
     def expect_redirect(self, fetchpage, redirectto, postdata=None):
         if postdata:
-            (c, s) = self.post(fetchpage, postdata)
+            r = self.post(fetchpage, postdata)
         else:
-            (c, s) = self.get(fetchpage)
-        if c.getinfo(pycurl.RESPONSE_CODE) != 302:
-            raise CommandError("Supposed to receive 302 for %s, got %s" % (fetchpage, c.getinfo(c.RESPONSE_CODE)))
+            r = self.get(fetchpage)
+
+        if not r.is_redirect:
+            raise CommandError("Supposed to receive redirect for %s, got %s" % (fetchpage, r.status_code))
         if not isinstance(redirectto, list):
             redirrectto = [redirectto, ]
-        if not c.getinfo(pycurl.REDIRECT_URL) in redirectto:
+        if not r.headers['Location'] in redirectto:
             raise CommandError("Received unexpected redirect from %s to '%s' (expected %s)" % (
-                fetchpage, c.getinfo(pycurl.REDIRECT_URL), redirectto))
-        return c.getinfo(pycurl.REDIRECT_URL)
+                fetchpage, headers['Location'], redirectto))
+        return r.headers['Location']
 
 
 class Command(BaseCommand):
@@ -92,12 +77,12 @@ class Command(BaseCommand):
 
         verbose = not options['quiet']
 
-        curl = CurlWrapper()
+        sess = SessionWrapper()
 
         if verbose:
             self.stdout.write("Logging in...")
 
-        curl.expect_redirect('https://www.creditmutuel.fr/en/authentification.html',
+        sess.expect_redirect('https://www.creditmutuel.fr/en/authentification.html',
                              'https://www.creditmutuel.fr/en/banque/pageaccueil.html', {
                                  '_cm_user': settings.CM_USER_ACCOUNT,
                                  '_cm_pwd': settings.CM_USER_PASSWORD,
@@ -105,29 +90,29 @@ class Command(BaseCommand):
                              })
 
         # Follow a redirect chain to collect more cookies
-        curl.expect_redirect('https://www.creditmutuel.fr/en/banque/pageaccueil.html',
+        sess.expect_redirect('https://www.creditmutuel.fr/en/banque/pageaccueil.html',
                              'https://www.creditmutuel.fr/en/banque/paci_engine/engine.aspx')
-        got_redir = curl.expect_redirect('https://www.creditmutuel.fr/en/banque/paci_engine/engine.aspx',
+        got_redir = sess.expect_redirect('https://www.creditmutuel.fr/en/banque/paci_engine/engine.aspx',
                                          ['https://www.creditmutuel.fr/en/banque/homepage_dispatcher.cgi',
                                           'https://www.creditmutuel.fr/en/banque/paci_engine/static_content_manager.aspx'])
         if got_redir == 'https://www.creditmutuel.fr/en/banque/paci_engine/static_content_manager.aspx':
             # Got the "please fill out your personal data" form. So let's bypass it
-            curl.expect_redirect('https://www.creditmutuel.fr/en/banque/paci_engine/static_content_manager.aspx?_productfilter=PACI&_pid=ContentManager&_fid=DoStopPaciAndRemind',
+            sess.expect_redirect('https://www.creditmutuel.fr/en/banque/paci_engine/static_content_manager.aspx?_productfilter=PACI&_pid=ContentManager&_fid=DoStopPaciAndRemind',
                                  'https://www.creditmutuel.fr/en/banque/homepage_dispatcher.cgi')
 
         # Download the form
         if verbose:
             self.stdout.write("Downloading form...")
 
-        (c, s) = curl.get('https://www.creditmutuel.fr/cmidf/en/banque/compte/telechargement.cgi')
-        if c.getinfo(pycurl.RESPONSE_CODE) != 200:
-            raise CommandError("Supposed to receive 200, got %s" % c.getinfo(c.RESPONSE_CODE))
+        r= sess.get('https://www.creditmutuel.fr/cmidf/en/banque/compte/telechargement.cgi')
+        if r.status_code != 200:
+            raise CommandError("Supposed to receive 200, got %s" % r.status_code)
 
         if verbose:
             self.stdout.write("Parsing form...")
 
         parser = FormHtmlParser()
-        parser.feed(s.getvalue())
+        parser.feed(r.text)
 
         fromdate = CMutuelTransaction.objects.all().aggregate(max=Max('opdate'))
         if fromdate['max']:
@@ -141,7 +126,7 @@ class Command(BaseCommand):
         if verbose:
             self.stdout.write("Fetch report since {0}".format(fromdate))
 
-        (c, s) = curl.post("https://www.creditmutuel.fr%s" % parser.target_url, {
+        r = sess.post("https://www.creditmutuel.fr%s" % parser.target_url, {
             'data_formats_selected': 'csv',
             'data_formats_options_cmi_download': '0',
             'data_formats_options_ofx_format': '7',
@@ -171,10 +156,10 @@ class Command(BaseCommand):
             'data_formats_options_excel_show': 'True',
             'data_formats_options_csv_show': 'True',
         })
-        if c.getinfo(pycurl.RESPONSE_CODE) != 200:
-            raise CommandError("Supposed to receive 200, got %s" % c.getinfo(c.RESPONSE_CODE))
+        if r.status_code != 200:
+            raise CommandError("Supposed to receive 200, got %s" % r.status_code)
 
-        reader = csv.reader(s.getvalue().splitlines(), delimiter=';')
+        reader = csv.reader(r.text.splitlines(), delimiter=';')
 
         # Write everything to the database
         with transaction.atomic():
