@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from models import CMutuelTransaction
+from .models import CMutuelTransaction
 
 
 class CMutuelTransactionAdmin(admin.ModelAdmin):

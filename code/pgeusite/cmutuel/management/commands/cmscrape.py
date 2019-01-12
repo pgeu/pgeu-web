@@ -9,13 +9,13 @@ from django.db.models import Max, Q
 from django.conf import settings
 
 import pycurl
-import cStringIO
-import urllib
+import io
+import urllib.request, urllib.parse, urllib.error
 import datetime
 import csv
 import sys
 from decimal import Decimal
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 
 
 from postgresqleu.mailqueue.util import send_simple_mail
@@ -46,12 +46,12 @@ class CurlWrapper(object):
 
     def request(self, url, post, postdict=None):
         self.curl.setopt(pycurl.URL, str(url))
-        readstr = cStringIO.StringIO()
+        readstr = io.StringIO()
         self.curl.setopt(pycurl.WRITEFUNCTION, readstr.write)
         self.curl.setopt(pycurl.FOLLOWLOCATION, 0)
         if post:
             self.curl.setopt(pycurl.POST, 1)
-            curlstr = urllib.urlencode(postdict)
+            curlstr = urllib.parse.urlencode(postdict)
             self.curl.setopt(pycurl.POSTFIELDS, curlstr)
             self.curl.setopt(pycurl.POSTFIELDSIZE, len(curlstr))
         else:
@@ -195,7 +195,7 @@ class Command(BaseCommand):
                                            amount=amount,
                                            description=description,
                                            balance=balance).save()
-                except Exception, e:
+                except Exception as e:
                     sys.stderr.write("Exception '{0}' when parsing row {1}".format(e, row))
 
         # Now send things off if there is anything to send
@@ -205,7 +205,7 @@ class Command(BaseCommand):
                     Q(description__startswith='VIR ADYEN BV ') |
                     Q(description__startswith='VIR ADYEN NV ')
             ).exists():
-                sio = cStringIO.StringIO()
+                sio = io.StringIO()
                 sio.write("One or more new transactions have been recorded in the Credit Mutuel account:\n\n")
                 sio.write("%-10s  %15s  %s\n" % ('Date', 'Amount', 'Description'))
                 sio.write("-" * 50)
