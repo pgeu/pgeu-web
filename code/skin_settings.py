@@ -1,7 +1,7 @@
 import os
 
 SKIN_APPS = [
-    'pgeusite.cmutuel',
+    'pgeusite.cmutuel.apps.cmConfig',
 ]
 
 SITEBASE = "https://www.postgresql.eu"
