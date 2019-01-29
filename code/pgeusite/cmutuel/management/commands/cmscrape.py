@@ -68,6 +68,16 @@ class SessionWrapper(object):
 class Command(BaseCommand):
     help = 'Scrape the CM website for list of recent transactions'
 
+    class ScheduledJob:
+        scheduled_times=[datetime.time(9,12), datetime.time(14,12), datetime.time(19,12)]
+
+        @classmethod
+        def should_run(self):
+            if not settings.CM_USER_ACCOUNT:
+                return False
+            return True
+
+
     def add_arguments(self, parser):
         parser.add_argument('-q', '--quiet', action='store_true')
 
