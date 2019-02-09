@@ -10,7 +10,6 @@ from django.conf import settings
 
 import requests
 import io
-import urllib.request, urllib.parse, urllib.error
 import datetime
 import csv
 import sys
@@ -71,7 +70,7 @@ class Command(BaseCommand):
     help = 'Scrape the CM website for list of recent transactions'
 
     class ScheduledJob:
-        scheduled_times=[datetime.time(9,12), datetime.time(14,12), datetime.time(19,12)]
+        scheduled_times = [datetime.time(9, 12), datetime.time(14, 12), datetime.time(19, 12)]
 
         @classmethod
         def should_run(self):
@@ -113,7 +112,7 @@ class Command(BaseCommand):
         if verbose:
             self.stdout.write("Downloading form...")
 
-        r= sess.get('https://www.creditmutuel.fr/cmidf/en/banque/compte/telechargement.cgi')
+        r = sess.get('https://www.creditmutuel.fr/cmidf/en/banque/compte/telechargement.cgi')
         if r.status_code != 200:
             raise CommandError("Supposed to receive 200, got %s" % r.status_code)
 
