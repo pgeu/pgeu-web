@@ -1,7 +1,7 @@
 # Scrape the CM pages to fetch list of transactions
 #
 #
-# Copyright (C) 2014, PostgreSQL Europe
+# Copyright (C) 2014-2019, PostgreSQL Europe
 #
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -19,6 +19,8 @@ from html.parser import HTMLParser
 
 
 from postgresqleu.mailqueue.util import send_simple_mail
+from postgresqleu.invoices.util import register_bank_transaction
+from postgresqleu.invoices.models import InvoicePaymentMethod
 
 from pgeusite.cmutuel.models import CMutuelTransaction
 
@@ -73,17 +75,14 @@ class Command(BaseCommand):
 
         @classmethod
         def should_run(self):
-            if not settings.CM_USER_ACCOUNT:
-                return False
-            return True
-
+            return InvoicePaymentMethod.objects.filter(active=True, classname='pgeusite.cmutuel.util.CMutuelPayment').exists()
 
     def add_arguments(self, parser):
         parser.add_argument('-q', '--quiet', action='store_true')
 
     def handle(self, *args, **options):
-        if not settings.CM_USER_ACCOUNT:
-            raise CommandError("Must specify CM user account in local_settings.py!")
+        method = InvoicePaymentMethod.objects.get(active=True, classname='pgeusite.cmutuel.util.CMutuelPayment')
+        pm = method.get_implementation()
 
         verbose = not options['quiet']
 
@@ -94,8 +93,8 @@ class Command(BaseCommand):
 
         sess.expect_redirect('https://www.creditmutuel.fr/en/authentification.html',
                              'https://www.creditmutuel.fr/en/banque/pageaccueil.html', {
-                                 '_cm_user': settings.CM_USER_ACCOUNT,
-                                 '_cm_pwd': settings.CM_USER_PASSWORD,
+                                 '_cm_user': pm.config('user'),
+                                 '_cm_pwd': pm.config('password'),
                                  'flag': 'password',
                              })
 
@@ -185,35 +184,40 @@ class Command(BaseCommand):
                     balance = Decimal(row[4])
 
                     if not CMutuelTransaction.objects.filter(opdate=opdate, valdate=valdate, amount=amount, description=description).exists():
-                        CMutuelTransaction(opdate=opdate,
-                                           valdate=valdate,
-                                           amount=amount,
-                                           description=description,
-                                           balance=balance).save()
+                        trans = CMutuelTransaction(opdate=opdate,
+                                                   valdate=valdate,
+                                                   amount=amount,
+                                                   description=description,
+                                                   balance=balance)
+                        trans.save()
+
+                        # Also send the transaction into the main system. Unfortunately we don't
+                        # know the sender.
+                        # register_bank_transaction returns True if the transaction has been fully
+                        # processed and thus don't need anything else, so we just consider it
+                        # sent already.
+                        if register_bank_transaction(method, trans.id, amount, description, ''):
+                            trans.sent = True
+                            trans.save()
                 except Exception as e:
                     sys.stderr.write("Exception '{0}' when parsing row {1}".format(e, row))
 
         # Now send things off if there is anything to send
         with transaction.atomic():
-            if CMutuelTransaction.objects.filter(sent=False).exclude(
-                    Q(description__startswith='VIR STG ADYEN ') |
-                    Q(description__startswith='VIR ADYEN BV ') |
-                    Q(description__startswith='VIR ADYEN NV ')
-            ).exists():
+            if CMutuelTransaction.objects.filter(sent=False).exists():
                 sio = io.StringIO()
                 sio.write("One or more new transactions have been recorded in the Credit Mutuel account:\n\n")
                 sio.write("%-10s  %15s  %s\n" % ('Date', 'Amount', 'Description'))
                 sio.write("-" * 50)
                 sio.write("\n")
-                for cmt in CMutuelTransaction.objects.filter(sent=False).order_by('opdate'):
-                    # Maybe this shouldn't be hardcoded, but for now it is.
-                    # Exclude Adyen transactions, since they are already reported separately.
-                    # Still flag them as sent though, so they don't queue up forever.
-                    if not (cmt.description.startswith('VIR STG ADYEN ') or cmt.description.startswith('VIR ADYEN BV ') or cmt.description.startswith('VIR ADYEN NV ')):
-                        sio.write("%10s  %15s  %s\n" % (cmt.opdate, cmt.amount, cmt.description))
 
+                for cmt in CMutuelTransaction.objects.filter(sent=False).order_by('opdate'):
+                    sio.write("%10s  %15s  %s\n" % (cmt.opdate, cmt.amount, cmt.description))
                     cmt.sent = True
                     cmt.save()
+
+                sio.write("\n\nYou will want to go processes these at:\n{0}/admin/invoices/banktransactions/".format(settings.SITEBASE))
+
                 send_simple_mail(settings.INVOICE_SENDER_EMAIL,
                                  settings.INVOICE_SENDER_EMAIL,
                                  'New Credit Mutuel transactions',

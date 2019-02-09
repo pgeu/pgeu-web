@@ -29,7 +29,3 @@ EU_VAT_VALIDATE = True
 # Invoice
 INVOICE_PDF_BUILDER = 'pgeuinvoices.PGEUInvoice'
 REFUND_PDF_BUILDER = 'pgeuinvoices.PGEURefund'
-
-# CM balance fetching account
-CM_USER_ACCOUNT = None
-CM_USER_PASSWORD = None
