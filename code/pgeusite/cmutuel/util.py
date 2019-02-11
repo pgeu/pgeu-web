@@ -1,13 +1,12 @@
 from django import forms
 from django.shortcuts import render
 from django.template import Template, Context
-from django.db.models import Sum
 
 from urllib.parse import urlencode
 
 from postgresqleu.util.payment.banktransfer import BaseManagedBankPayment
 from postgresqleu.util.payment.banktransfer import BaseManagedBankPaymentForm
-from postgresqleu.invoices.models import Invoice, BankTransferFees
+from postgresqleu.invoices.models import Invoice
 
 
 class BackendCMutuelForm(BaseManagedBankPaymentForm):
