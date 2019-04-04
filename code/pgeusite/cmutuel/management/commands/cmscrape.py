@@ -62,7 +62,7 @@ class SessionWrapper(object):
             redirrectto = [redirectto, ]
         if not r.headers['Location'] in redirectto:
             raise CommandError("Received unexpected redirect from %s to '%s' (expected %s)" % (
-                fetchpage, headers['Location'], redirectto))
+                fetchpage, r.headers['Location'], redirectto))
         return r.headers['Location']
 
 
