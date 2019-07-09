@@ -19,6 +19,7 @@ DEFAULT_EMAIL = "webmaster@postgresql.eu"
 SERVER_EMAIL = "webmaster@postgresql.eu"
 TREASURER_EMAIL = "treasurer@postgresql.eu"
 INVOICE_SENDER_EMAIL = "treasurer@postgresql.eu"
+INVOICE_NOTIFICATION_RECEIVER = "treasurer@postgresql.eu"
 SCHEDULED_JOBS_EMAIL = "webmaster@postgresql.eu"
 
 # Ugh
