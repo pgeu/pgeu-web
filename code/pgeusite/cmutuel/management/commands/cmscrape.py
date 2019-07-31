@@ -182,6 +182,12 @@ class Command(BaseCommand):
                     description = row[3]
                     balance = Decimal(row[4])
 
+                    if opdate.date() == datetime.date.today() and amount > 0 and description.startswith("VIR "):
+                        # For incoming transfers we sometimes don't get the full transaction text
+                        # right away. Because, reasons unknown. So if the transaction is actually
+                        # dated today and it starts with VIR, we ignore it until we get to tomorrow.
+                        continue
+
                     if not CMutuelTransaction.objects.filter(opdate=opdate, valdate=valdate, amount=amount, description=description).exists():
                         trans = CMutuelTransaction(opdate=opdate,
                                                    valdate=valdate,
