@@ -114,7 +114,7 @@ class Command(BaseCommand):
         if verbose:
             self.stdout.write("Downloading form...")
 
-        r = sess.get('https://www.creditmutuel.fr/cmidf/en/banque/compte/telechargement.cgi')
+        r = sess.get('https://www.creditmutuel.fr/en/banque/compte/telechargement.cgi')
         if r.status_code != 200:
             raise CommandError("Supposed to receive 200, got %s" % r.status_code)
 
