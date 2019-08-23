@@ -31,10 +31,12 @@ class FormHtmlParser(HTMLParser):
         self.target_url = None
 
     def handle_starttag(self, tag, attrs):
+        if self.target_url:
+            return
         if tag == 'form':
             for k, v in attrs:
                 if k == 'action':
-                    if v.find('telechargement.cgi?'):
+                    if v.find('telechargement.cgi?') >= 0:
                         self.in_form = True
                         self.target_url = v
                         return
