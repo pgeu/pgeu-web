@@ -102,13 +102,6 @@ class Command(BaseCommand):
         # Follow a redirect chain to collect more cookies
         sess.expect_redirect('https://www.creditmutuel.fr/en/banque/pageaccueil.html',
                              'https://www.creditmutuel.fr/en/banque/paci_engine/engine.aspx')
-        got_redir = sess.expect_redirect('https://www.creditmutuel.fr/en/banque/paci_engine/engine.aspx',
-                                         ['https://www.creditmutuel.fr/en/banque/homepage_dispatcher.cgi',
-                                          'https://www.creditmutuel.fr/en/banque/paci_engine/static_content_manager.aspx'])
-        if got_redir == 'https://www.creditmutuel.fr/en/banque/paci_engine/static_content_manager.aspx':
-            # Got the "please fill out your personal data" form. So let's bypass it
-            sess.expect_redirect('https://www.creditmutuel.fr/en/banque/paci_engine/static_content_manager.aspx?_productfilter=PACI&_pid=ContentManager&_fid=DoStopPaciAndRemind',
-                                 'https://www.creditmutuel.fr/en/banque/homepage_dispatcher.cgi')
 
         # Download the form
         if verbose:
