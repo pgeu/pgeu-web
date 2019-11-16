@@ -52,13 +52,15 @@ class SessionWrapper(object):
     def post(self, url, postdict):
         return self.session.post(url, data=postdict, allow_redirects=False)
 
-    def expect_redirect(self, fetchpage, redirectto, postdata=None):
+    def expect_redirect(self, fetchpage, redirectto, postdata=None, allow_200=True):
         if postdata:
             r = self.post(fetchpage, postdata)
         else:
             r = self.get(fetchpage)
 
         if not r.is_redirect:
+            if allow_200 and r.status_code == 200:
+                return ""
             raise CommandError("Supposed to receive redirect for %s, got %s" % (fetchpage, r.status_code))
         if not isinstance(redirectto, list):
             redirrectto = [redirectto, ]
@@ -99,9 +101,13 @@ class Command(BaseCommand):
                                  'flag': 'password',
                              })
 
+        if verbose:
+            self.stdout.write("Following a redirect chain for cookies")
+
         # Follow a redirect chain to collect more cookies
         sess.expect_redirect('https://www.creditmutuel.fr/en/banque/pageaccueil.html',
-                             'https://www.creditmutuel.fr/en/banque/paci_engine/engine.aspx')
+                             'https://www.creditmutuel.fr/en/banque/paci_engine/engine.aspx',
+                             allow_200=True)
 
         # Download the form
         if verbose:
