@@ -11,14 +11,11 @@ from django.conf import settings
 import requests
 import io
 import datetime
-import csv
 import sys
-from decimal import Decimal
 from html.parser import HTMLParser
 
 
 from postgresqleu.mailqueue.util import send_simple_mail
-from postgresqleu.invoices.util import register_bank_transaction
 from postgresqleu.invoices.models import InvoicePaymentMethod
 
 from pgeusite.cmutuel.models import CMutuelTransaction
@@ -168,45 +165,11 @@ class Command(BaseCommand):
         if r.status_code != 200:
             raise CommandError("Supposed to receive 200, got %s" % r.status_code)
 
-        reader = csv.reader(r.text.splitlines(), delimiter=';')
-
-        # Write everything to the database
-        with transaction.atomic():
-            for row in reader:
-                if row[0] == 'Operation date' or row[0] == 'Date':
-                    # This is just a header
-                    continue
-                try:
-                    opdate = datetime.datetime.strptime(row[0], '%d/%m/%Y')
-                    valdate = datetime.datetime.strptime(row[1], '%d/%m/%Y')
-                    amount = Decimal(row[2])
-                    description = row[3]
-                    balance = Decimal(row[4])
-
-                    if opdate.date() == datetime.date.today() and amount > 0 and description.startswith("VIR "):
-                        # For incoming transfers we sometimes don't get the full transaction text
-                        # right away. Because, reasons unknown. So if the transaction is actually
-                        # dated today and it starts with VIR, we ignore it until we get to tomorrow.
-                        continue
-
-                    if not CMutuelTransaction.objects.filter(opdate=opdate, valdate=valdate, amount=amount, description=description).exists():
-                        trans = CMutuelTransaction(opdate=opdate,
-                                                   valdate=valdate,
-                                                   amount=amount,
-                                                   description=description,
-                                                   balance=balance)
-                        trans.save()
-
-                        # Also send the transaction into the main system. Unfortunately we don't
-                        # know the sender.
-                        # register_bank_transaction returns True if the transaction has been fully
-                        # processed and thus don't need anything else, so we just consider it
-                        # sent already.
-                        if register_bank_transaction(method, trans.id, amount, description, ''):
-                            trans.sent = True
-                            trans.save()
-                except Exception as e:
-                    sys.stderr.write("Exception '{0}' when parsing row {1}".format(e, row))
+        try:
+            with transaction.atomic():
+                pm.parse_uploaded_file(r.text)
+        except Exception as e:
+            raise CommandError(e)
 
         # Now send things off if there is anything to send
         with transaction.atomic():
