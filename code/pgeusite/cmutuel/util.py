@@ -68,11 +68,11 @@ Download a reasonable range of transactions, typically with a few days overlap.
         for row in reader:
             if row[0] == 'Date':
                 # Validaste the header
-                colheaders = ['Date', 'Value date', 'Amount', 'Message', 'Balance']
+                colheaders = [['Date'], ['Value date', 'Date de valeur'], ['Amount', 'Montant'], ['Message', 'Libellé'], ['Balance', 'Solde']]
                 if len(row) != len(colheaders):
                     raise Exception("Invalid number of columns in input file. Got {}, expected {}.".format(len(row), len(colheaders)))
                 for i in range(len(colheaders)):
-                    if row[i] != colheaders[i]:
+                    if not row[i] in colheaders[i]:
                         raise Exception("Invalid column {}. Got {}, expected {}.".format(i, row[i], colheaders[i]))
                 foundheader = True
                 continue
