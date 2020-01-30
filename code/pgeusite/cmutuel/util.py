@@ -56,7 +56,8 @@ Download a reasonable range of transactions, typically with a few days overlap.
             'invoice': invoice,
         })
 
-    def parse_uploaded_file(self, contents):
+    def parse_uploaded_file(self, f):
+        contents = f.read().decode('iso-8859-1')
         reader = csv.reader(contents.splitlines(), delimiter=';')
 
         # Write everything to the database
@@ -116,4 +117,4 @@ Download a reasonable range of transactions, typically with a few days overlap.
                 # Re-raise but including the full row information
                 raise Exception("Exception '{0}' when parsing row {1}".format(e, row))
 
-        return (numrows, numtrans, numpending)
+        return (contents, numrows, numtrans, numpending)
