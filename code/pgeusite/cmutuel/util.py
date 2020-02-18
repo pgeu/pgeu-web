@@ -18,18 +18,6 @@ from pgeusite.cmutuel.models import CMutuelTransaction
 class BackendCMutuelForm(BaseManagedBankPaymentForm):
     bank_file_uploads = True
 
-    user = forms.CharField(required=True, label="User account", help_text="Username used to log in")
-    password = forms.CharField(required=True, widget=forms.widgets.PasswordInput(render_value=True))
-
-    managed_fields = ['user', 'password', ]
-    managed_fieldsets = [
-        {
-            'id': 'cm',
-            'legend': 'Credit Mutuel',
-            'fields': ['user', 'password', ],
-        }
-    ]
-
 
 class CMutuelPayment(BaseManagedBankPayment):
     backend_form_class = BackendCMutuelForm
