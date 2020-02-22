@@ -22,7 +22,7 @@ SELECT
   amount,
   description,
   balance,
-  jsonb_build_object('valdate', valdate),
+  jsonb_build_object('value date', valdate),
   NULL,
   (SELECT id FROM invoices_invoicepaymentmethod WHERE classname='pgeusite.cmutuel.util.CMutuelPayment')
 FROM cmutuel_cmutueltransaction
