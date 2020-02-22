@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('cmutuel', '0001_initial'),
-        ('invoices', '0017_banksstatement'),
+        ('invoices', '0017_bankstatement'),
     ]
 
     operations = [
