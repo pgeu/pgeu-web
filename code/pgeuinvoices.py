@@ -15,7 +15,7 @@ France
 SIREN 823839535
 VAT# FR36823839535
 """
-    sendertext = """Your contact: Guillaume Lelarge
+    sendertext = """Your contact:
 Function: PostgreSQL Europe Treasurer
 E-mail: treasurer@postgresql.eu"""
 
