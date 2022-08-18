@@ -33,17 +33,17 @@
 	      <h5>{{event.location}}</h5>
 	    </div>
 	  </div>
-{%if event.active%}
+{%if event.IsRegistrationOpen%}
 	  <div class="carousel-caption eventCarouselBadge eventCarouselRegBadge d-none d-xl-block">
 	    <a href="/events/{{event.urlname}}/register/">Open for registration</a>
 	  </div>
 {%endif%}
-{%if event.callforpapersopen%}
+{%if event.IsCallForPapersOpen%}
 	  <div class="carousel-caption eventCarouselBadge eventCarouselCfpBadge d-none d-xl-block">
 	    <a href="/events/{{event.urlname}}/callforpapers/">Call for papers is open</a>
 	  </div>
 {%endif%}
-{%if event.callforsponsorsopen%}
+{%if event.IsCallForSponsorsOpen%}
 	  <div class="carousel-caption eventCarouselBadge eventCarouselCfsBadge d-none d-xl-block">
 	    <a href="/events/sponsor/signup/{{event.urlname}}/">Call for sponsors is open</a>
 	  </div>
