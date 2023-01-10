@@ -39,5 +39,8 @@ ASSETS_OVERRIDE = {
     },
     "fontawesome6": {
         "css": "https://assets.postgresql.eu/font-awesome/fontawesome-free-6/css/all.min.css",
-    }
+    },
+    "jquery3": {
+        "js": "https://assets.postgresql.eu/jquery/3/jquery-3.6.1.slim.min.js",
+    },
 }
