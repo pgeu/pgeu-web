@@ -33,6 +33,10 @@ REFUND_PDF_BUILDER = 'pgeuinvoices.PGEURefund'
 
 # Override assets for our CDN
 ASSETS_OVERRIDE = {
+    "bootstrap3": {
+        "css": "https://assets.postgresql.eu/bootstrap/3/css/bootstrap.min.css",
+        "js": "https://assets.postgresql.eu/bootstrap/3/js/bootstrap.min.js",
+    },
     "bootstrap4": {
         "css": "https://assets.postgresql.eu/bootstrap/4/css/bootstrap.min.css",
         "js": "https://assets.postgresql.eu/bootstrap/4/js/bootstrap.min.js",
