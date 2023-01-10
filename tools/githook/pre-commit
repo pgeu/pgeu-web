@@ -23,7 +23,7 @@ if [ "$FILES" != "" ]; then
 	    continue
 	fi
 
-	R=$(git show ":$F" | pep8 --config=code/setup.cfg -)
+	R=$(git show ":$F" | pycodestyle --config=code/setup.cfg -)
 	if [ "$?" != "0" ]; then
 	    echo "Errors in $F"
 	    echo "$R"
