@@ -37,8 +37,7 @@ ASSETS_OVERRIDE = {
         "css": "https://assets.postgresql.eu/bootstrap/4/css/bootstrap.min.css",
         "js": "https://assets.postgresql.eu/bootstrap/4/js/bootstrap.min.js",
     },
-    "xbootstrap4": {
-        "css": "https://maxcdn.bootstrapcdn.com/bootstrap/4.6.0/css/bootstrap.min.css",
-        "js": "https://maxcdn.bootstrapcdn.com/bootstrap/4.6.0/js/bootstrap.min.js",
-    },
+    "fontawesome6": {
+        "css": "https://assets.postgresql.eu/font-awesome/fontawesome-free-6/css/all.min.css",
+    }
 }
