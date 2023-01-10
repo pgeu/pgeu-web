@@ -68,7 +68,7 @@
 {%for n in news%}
 	<div class="{%if forloop.counter > 2%}d-none d-lg-block{%endif%}">
 	<h4 class="text-center"><a href="{{n.itemlink}}">{{n.title}}</a></h4>
-	<div class="text-center small"><i class="fa fa-clock-o"></i> {{n.datetime|date:"Y-m-d"}}</div>
+	<div class="text-center small"><i class="fa fa-clock fa-clock-o"></i> {{n.datetime|date:"Y-m-d"}}</div>
 	<div class="newscontent">
 	  {{n.summaryhtml|safe|truncatewords_html:100}}
 	</div>
