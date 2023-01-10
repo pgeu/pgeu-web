@@ -30,3 +30,15 @@ EU_VAT_VALIDATE = True
 # Invoice
 INVOICE_PDF_BUILDER = 'pgeuinvoices.PGEUInvoice'
 REFUND_PDF_BUILDER = 'pgeuinvoices.PGEURefund'
+
+# Override assets for our CDN
+ASSETS_OVERRIDE = {
+    "bootstrap4": {
+        "css": "https://assets.postgresql.eu/bootstrap/4/css/bootstrap.min.css",
+        "js": "https://assets.postgresql.eu/bootstrap/4/js/bootstrap.min.js",
+    },
+    "xbootstrap4": {
+        "css": "https://maxcdn.bootstrapcdn.com/bootstrap/4.6.0/css/bootstrap.min.css",
+        "js": "https://maxcdn.bootstrapcdn.com/bootstrap/4.6.0/js/bootstrap.min.js",
+    },
+}
