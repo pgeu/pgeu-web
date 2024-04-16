@@ -1,9 +1,9 @@
-from django.conf.urls import url
+from django.urls import re_path
 
 import postgresqleu.static.views
 import postgresqleu.membership.views
 
 PRELOAD_URLS = [
-    url(r'^(events/services)/$', postgresqleu.static.views.static_fallback),
-    url(r'^community/members/$', postgresqleu.membership.views.userlist),
+    re_path(r'^(events/services)/$', postgresqleu.static.views.static_fallback),
+    re_path(r'^community/members/$', postgresqleu.membership.views.userlist),
 ]
