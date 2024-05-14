@@ -8,9 +8,8 @@ from postgresqleu.util.misc.baseinvoice import BaseInvoice, BaseRefund
 class PGEUBase(object):
     logo = os.path.join(settings.PROJECT_ROOT, '../media/img/PostgreSQL_logo.1color_blue.300x300.png')
     headertext = """PostgreSQL Europe
-Carpeaux Diem
-13, rue du Square Carpeaux
-75018 PARIS
+61 rue de Lyon
+75012 PARIS
 France
 SIREN 823839535
 VAT# FR36823839535
